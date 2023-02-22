@@ -30,7 +30,7 @@ weatherForm.addEventListener('submit', (e) => {
             } else {
                 address.innerHTML = "Location : " + data.location
                 temp.innerHTML = "Temperature : " + data.forecast.temperature + " degrees"
-                humidity.innerHTML = "Humidity : " + data.forecast.humidity
+                humidity.innerHTML = "Humidity : " + data.forecast.humidity + " %"
                 desc.innerHTML = "Description : " + data.forecast.desc
                 precip.innerHTML = "Precipitation : " + data.forecast.precip + " %"
                 feelsLike.innerHTML = "Feels like : " + data.forecast.feelsLike + " degrees"
