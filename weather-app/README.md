@@ -4,7 +4,7 @@
 
 ## How to use:
 - Install the repository.
-- Run the belox code by placing any location in the arguments.
+- Run the below code by placing any location in the arguments.
 > node app.js \<location>
 
 ## APIs used:
