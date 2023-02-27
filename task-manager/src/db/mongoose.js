@@ -6,3 +6,5 @@ mongoose.connect(process.env.MONGODB_URL)
 const db = mongoose.connection;
 db.on("error",(error)=>console.log(error));
 db.once("open",()=>console.log("DB Connected"))
+
+console.log('Not working code')
