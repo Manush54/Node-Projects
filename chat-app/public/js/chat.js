@@ -2,12 +2,12 @@
  * Helper file for client side communication
  * Accesses username and room from login query (location)
  * Renders chat templates like message and location for a specific user and room
- * Events : 
-    * On message
-    * On locationMessage
-    * Handling message send
-    * Handling location send
-    * On Join
+ * Events :
+ * On message
+ * On locationMessage
+ * Handling message send
+ * Handling location send
+ * On Join
  */
 
 // io is used to address all the connected clients via server
@@ -22,98 +22,128 @@ const $messages = document.querySelector('#messages')
 
 // Templates
 const messageTemplate = document.querySelector('#message-template').innerHTML
-const locationmessageTemplate = document.querySelector('#location-message-template').innerHTML
+const locationmessageTemplate = document.querySelector(
+	'#location-message-template'
+).innerHTML
 const sidebarTemplate = document.querySelector('#sidebar-template').innerHTML
 
 // Options
-const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true })
+const { username, room } = Qs.parse(location.search, {
+	ignoreQueryPrefix: true,
+})
+
+const autoscroll = () => {
+	// New message element
+	const $newMessage = $messages.lastElementChild
+
+	// Height of the new message
+	const newMessageStyles = getComputedStyle($newMessage)
+	const newMessageMargin = parseInt(newMessageStyles.marginBottom)
+	const newMessageHeight = $newMessage.offsetHeight + newMessageMargin
+
+	// Visible Height
+	const visibleHeight = $messages.offsetHeight
+
+	// Height of messages container
+	const containerHeight = $messages.scrollHeight
+
+	// How far we have scrolled?
+	const scrollOffset = $messages.scrollTop + visibleHeight
+
+	if (containerHeight - newMessageHeight <= scrollOffset)
+		$messages.scrollTop = $messages.scrollHeight
+}
 
 // Recieve messsage from server
 socket.on('message', (message) => {
-    console.log(message)
-    const html = Mustache.render(messageTemplate, {
-        username: message.username,
-        message : message.text,
-        createdAt : moment(message.createdAt).format(`h:mm a`)
-    })
-    $messages.insertAdjacentHTML('beforeend', html)
+	console.log(message)
+	const html = Mustache.render(messageTemplate, {
+		username: message.username,
+		message: message.text,
+		createdAt: moment(message.createdAt).format(`h:mm a`),
+	})
+	$messages.insertAdjacentHTML('beforeend', html)
+	autoscroll()
 })
 
 socket.on('locationMessage', (message) => {
-    console.log(message)
-    const html = Mustache.render(locationmessageTemplate, {
-        username : message.username,
-        url: message.url,
-        createdAt: moment(message.createdAt).format(`h:mm a`)
-    })
-    $messages.insertAdjacentHTML('beforeend', html)
-    
+	console.log(message)
+	const html = Mustache.render(locationmessageTemplate, {
+		username: message.username,
+		url: message.url,
+		createdAt: moment(message.createdAt).format(`h:mm a`),
+	})
+	$messages.insertAdjacentHTML('beforeend', html)
+	autoscroll()
 })
 
 // Room Data Handling ( UserList )
-socket.on('roomData', ({room, users}) => {
-    const html = Mustache.render(sidebarTemplate, {
-        room,
-        users
-    })
+socket.on('roomData', ({ room, users }) => {
+	const html = Mustache.render(sidebarTemplate, {
+		room,
+		users,
+	})
 
-    document.querySelector('#sidebar').innerHTML = html
+	document.querySelector('#sidebar').innerHTML = html
 })
 
 // Extract values from form data (input message).
 $messageForm.addEventListener('submit', (e) => {
-    e.preventDefault()
-    
-    // Disable till acknowlwedged
-    $messageFormButton.setAttribute('disabled', 'disabled')
+	e.preventDefault()
 
-    const message = e.target.elements.message.value  // Alternate way
-    
-    // Send message to the server
-    socket.emit('sendMessage', message, (error) => {
-        // enable
-        $messageFormButton.removeAttribute('disabled')
-        $messageFormInput.value = ''
-        $messageFormInput.focus()
+	// Disable till acknowlwedged
+	$messageFormButton.setAttribute('disabled', 'disabled')
 
-        if(error) {
-            return console.log(error)
-        }
-        
-        console.log('Message delivered', message)
-    })
+	const message = e.target.elements.message.value // Alternate way
+
+	// Send message to the server
+	socket.emit('sendMessage', message, (error) => {
+		// enable
+		$messageFormButton.removeAttribute('disabled')
+		$messageFormInput.value = ''
+		$messageFormInput.focus()
+
+		if (error) {
+			return console.log(error)
+		}
+
+		console.log('Message delivered', message)
+	})
 })
 
 // On clicking Send Location
 $sendLocationButton.addEventListener('click', () => {
-    if(!navigator.geolocation) { 
-        return alert('Geolocation is not supported by your browser')
-    }
+	if (!navigator.geolocation) {
+		return alert('Geolocation is not supported by your browser')
+	}
 
-    // Disable till acknowlwedged
-    $sendLocationButton.setAttribute('disabled', 'disabled')
+	// Disable till acknowlwedged
+	$sendLocationButton.setAttribute('disabled', 'disabled')
 
-    navigator.geolocation.getCurrentPosition((position) => {
-        socket.emit('sendLocation', {
-            longitude : position.coords.longitude,
-            latitude : position.coords.latitude
-        }, (error) => {
-            
-            // Enabling button again
-            $sendLocationButton.removeAttribute('disabled')
-            if(error) {
-                return console.log(error)
-            }
+	navigator.geolocation.getCurrentPosition((position) => {
+		socket.emit(
+			'sendLocation',
+			{
+				longitude: position.coords.longitude,
+				latitude: position.coords.latitude,
+			},
+			(error) => {
+				// Enabling button again
+				$sendLocationButton.removeAttribute('disabled')
+				if (error) {
+					return console.log(error)
+				}
 
-            console.log('Location shared!')
-        })
-    })
+				console.log('Location shared!')
+			}
+		)
+	})
 })
 
 socket.emit('join', { username, room }, (error) => {
-    if(error) {
-        alert(error)
-        // Send the user back to login page
-        location.href = '/'
-    }
+	if (error) {
+		alert(error)
+		// Send the user back to login page
+		location.href = '/'
+	}
 })
